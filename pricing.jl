@@ -142,7 +142,6 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
                         v = path[j]
                         if v == v_i # v_i is twice in the path
                             sub_c = splice!(path, i+1:j) # cut the subcycle 
-                            @show sub_c
                             if sum((1.0 .- Π_dual[sub_c])) >= 0 # Check that the cost is positive
                                 push!(cycles_k, sub_c) # save the sub-cycle into the result
                             end
@@ -152,15 +151,13 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
                     i += 1
                 end
 
-                @show path
-                push!(cycles_k, path)  # Save the last sub-cycle
+                println("\t -> flag_stop")
 
-                @show cycles_k
+                push!(cycles_k, path)  # Save the last sub-cycle
 
                 # There is no need to look for other cycles that gives z_o ((1?) Is there really not any ?) 
                 # column generation must keep going so we return false 
 
-                println("end flag_stop")
                 return (cycles_k, false)
             end
         end
