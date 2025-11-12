@@ -25,7 +25,7 @@ function initialize_SP_o(G_o_prime::SimpleDiGraph, Gop_validity::Bool)::Model
         # → obectif (maximum length) to be defined with the obj_o_SP
 
 
-        @variable(SP_o, x[i in I_o, j in outneighbors(G_o_prime, i)], Bin)
+        @variable(SP_o, 0 <= x[i in I_o, j in outneighbors(G_o_prime, i)] <= 1)
         # ↓ flow constraint ↓
         @constraint(SP_o, [i in I_o[2:end-1]], sum(x[i, j] for j in outneighbors(G_o_prime, i)) == sum(x[j, i] for j in inneighbors(G_o_prime, i)))
         # ↓ exactly 1 transfert per sick/donor pair ↓
@@ -69,6 +69,7 @@ Solves the ILP formulation of the o-th subproblem
 function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64=0)::Tuple{Vector{Int64},Bool}
 
     set_optimizer_attribute(SP_o, "output_flag", verb >= 2) # activate or deactivates solver logs
+
     optimize!(SP_o)
 
     z_o = objective_value(SP_o)
