@@ -7,9 +7,12 @@ include("KEP_readfile.jl")
 include("column_generation.jl")
 
 
-G, edge_weight = read_wmd_file("data_KEP/KEP_151.wmd");
+G, edge_weight = read_wmd_file("data_KEP/KEP_071.wmd");
 K = 4
 max_iter = 10000
-transferts = column_generation_ILP(G, K; init_choice="all K=2", max_iter=max_iter)
+verbosity = 0
+SP_order = "random"
+C_K, n_transferts_relax = column_generation_ILP(G, K; init_choice="all K=2", SP_order=SP_order, max_iter=max_iter, verb=verbosity)
+selected_cycles = integer_solution(C_K, n_transferts_relax, verb=verbosity)
 
 println("=============[END]=============")

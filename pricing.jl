@@ -87,7 +87,7 @@ function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64=0)::T
 
 
     # Stopping condition for all o-th sub-problem
-    if z_o > 5e-15  # we need to save the cycle that gives this z_o > o  (there were approximation errors)
+    if z_o > 1e-4  # we need to save the cycle that gives this z_o > o  (there were approximation errors)
         stop_SP = true
         i = 1
         push!(ind_cycle, i)
@@ -116,15 +116,16 @@ Solves the (SP_o) subproblems until it finds a cycle that gives z_o > 0
 * `SP::Vector{Model}` : the o-th subproblems (SP_o) for o ∈ I
 * `Gs_prime::Vector{SimpleDiGraph}` : outneighbors graphs for each subproblem
 * `Φ::Vector{Vector{Int64}}` : assossiation tables for each outneigbours graph
-* `Π_dual::Vector{Float64}` : solution of the DW formulation problem restricted to C_K^(k)
 * `Gsp_validities::Vector{Bool}` : contains false there is no cycles starting from o and passing by vertices > o (infeasible subproblem)
+* `Π_dual::Vector{Float64}` : solution of the DW formulation problem restricted to C_K^(k)
+* `order::Vector{Int64}` : choice of subproblem resolution order
 """
-function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64})::Tuple{Vector{Vector{Int64}},Bool}
+function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64}, order::Vector{Int64})::Tuple{Vector{Vector{Int64}},Bool}
 
 
     cycles_k = Vector{Vector{Int64}}()
 
-    for o in length(SP):-1:1 # o ∈ I , # length(SP):-1:1 # 1:length(SP)
+    for o in order # o ∈ I in the given order
 
         # We solve the sub-problem only if it is valid
         if Gsp_validities[o]
@@ -146,7 +147,7 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
                             if sum((1.0 .- Π_dual[sub_c])) >= 0 # Check that the cost is positive
                                 push!(cycles_k, sub_c) # save the sub-cycle into the result
                             else
-                                @error "\t sub-cycle not add : negative cost"
+                                @warn "\t sub-cycle not add : negative cost"
                             end
                         end
                         j += 1
@@ -156,12 +157,8 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
 
                 push!(cycles_k, path)  # Save the last sub-cycle
 
-                print("\r\t\t -> stop : subproblem n°$o : $cycles_k : $(Π_dual[cycles_k[1]])")
-
-
                 # There is no need to look for other cycles that gives z_o ((1?) Is there really not any ?) 
                 # column generation must keep going so we return false 
-
                 return (cycles_k, false)
             end
         end
