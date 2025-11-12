@@ -31,6 +31,8 @@ function initialize_SP_o(G_o_prime::SimpleDiGraph, Gop_validity::Bool)::Model
         # ↓ exactly 1 transfert per sick/donor pair ↓
 
         @constraint(SP_o, sum(x[1, j] for j in outneighbors(G_o_prime, 1)) == 1)
+        @constraint(SP_o, sum(x[j, I_o[end]] for j in inneighbors(G_o_prime, I_o[end])) == 1)
+
         # @constraint(SP_o, sum(x[j, 1] for j in outneighbors(G_o_prime, I_o[end])) == 1) # useless ?? (?2)
     end
 
@@ -67,7 +69,7 @@ Solves the ILP formulation of the o-th subproblem
 function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64=0)::Tuple{Vector{Int64},Bool}
 
     set_optimizer_attribute(SP_o, "output_flag", verb >= 2) # activate or deactivates solver logs
-    timer = @timed optimize!(SP_o)
+    optimize!(SP_o)
 
     z_o = objective_value(SP_o)
     I_o = vertices(G_o_prime)
@@ -84,11 +86,11 @@ function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64=0)::T
 
 
     # Stopping condition for all o-th sub-problem
-    if z_o > 0.  # we need to save the cycle that gives this z_o > o  
+    if z_o > 5e-15  # we need to save the cycle that gives this z_o > o  (there were approximation errors)
         stop_SP = true
         i = 1
         push!(ind_cycle, i)
-        while i != length(I_o)  # stop when it reach the last vertex of G_o_prime : o
+        while i < length(I_o)  # stop when it reach the last vertex of G_o_prime : o
             for on in outneighbors(G_o_prime, i)
                 if value(SP_o[:x][i, on]) > 0
                     i = on
@@ -121,12 +123,10 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
 
     cycles_k = Vector{Vector{Int64}}()
 
-    for o in eachindex(SP) # o ∈ I
+    for o in length(SP):-1:1 # o ∈ I , # length(SP):-1:1 # 1:length(SP)
 
         # We solve the sub-problem only if it is valid
         if Gsp_validities[o]
-            println("Begin pricing subproblem $o")
-
             objective_SP_o!(SP[o], Gs_prime[o], Φ[o], Π_dual) # update the o-th subproblem with the new values of Π_dual
             ind_cycle, flag_stop = solve_SP_o_ILP(SP[o], Gs_prime[o])
 
@@ -144,6 +144,8 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
                             sub_c = splice!(path, i+1:j) # cut the subcycle 
                             if sum((1.0 .- Π_dual[sub_c])) >= 0 # Check that the cost is positive
                                 push!(cycles_k, sub_c) # save the sub-cycle into the result
+                            else
+                                @error "\t sub-cycle not add : negative cost"
                             end
                         end
                         j += 1
@@ -151,9 +153,10 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
                     i += 1
                 end
 
-                println("\t -> flag_stop")
-
                 push!(cycles_k, path)  # Save the last sub-cycle
+
+                print("\r\t\t -> stop : subproblem n°$o : $cycles_k : $(Π_dual[cycles_k[1]])")
+
 
                 # There is no need to look for other cycles that gives z_o ((1?) Is there really not any ?) 
                 # column generation must keep going so we return false 
