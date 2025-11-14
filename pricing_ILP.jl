@@ -108,7 +108,7 @@ end
 
 
 """
-    princing_ILP
+    pricing_ILP
 
 Solves the (SP_o) subproblems until it finds a cycle that gives z_o > 0
 
@@ -120,7 +120,7 @@ Solves the (SP_o) subproblems until it finds a cycle that gives z_o > 0
 * `Π_dual::Vector{Float64}` : solution of the DW formulation problem restricted to C_K^(k)
 * `order::Vector{Int64}` : choice of subproblem resolution order
 """
-function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64}, order::Vector{Int64}, verb::Int64)::Tuple{Vector{Vector{Int64}},Bool}
+function pricing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64}, order::Vector{Int64}, verb::Int64)::Tuple{Vector{Vector{Int64}},Bool}
 
 
     cycles_k = Vector{Vector{Int64}}()

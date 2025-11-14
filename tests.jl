@@ -17,7 +17,7 @@ struct KEP_test
     max_iter::Int64
 
     # constructor (with default parameters) -> load the graph_file
-    function KEP_test(g_file::String, K::Int64=2, init_choice::String="half K=2", SP_method::String="ILP", SP_order::String="default", max_iter::Int64=500)
+    function KEP_test(g_file::String; K::Int64=4, init_choice::String="half K=2", SP_method::String="ILP", SP_order::String="random", max_iter::Int64=500)
         G, _ = read_wmd_file(g_file)
         new(G, K, init_choice, SP_method, SP_order, max_iter)
     end

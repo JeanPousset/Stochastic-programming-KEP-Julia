@@ -1,7 +1,8 @@
 include("out_ngb_G.jl")
 include("DW_problem.jl")
-include("pricing.jl")
-include("initialisation.jl")
+include("pricing_ILP.jl")
+include("initialization.jl")
+include("bellmann.jl")
 
 using Random
 
@@ -51,10 +52,12 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64, init_choice::String, 
 
         # ↓ warning ↓ : will create empty problem if it is infeasible (G_o_prime doesn't containt any path)
         SP = [initialize_SP_o(Gs_prime[o], Gsp_validities[o]) for o in I] # Sub Problems (SP_o) for o ∈ ⟦1,|I|⟧ 
-        pricing = (Π_dual, sp_order) -> princing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
+        pricing = (Π_dual, sp_order) -> pricing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
+        sp_order = I[Gsp_validities]
 
     elseif SP_method == "Bellmann"
-        pricing = (Π_dual, sp_order) -> princing_Bellmann(G, K, Π_dual, sp_order, C_K_k, sp_order) # [TO DO]
+        sp_order = I
+        pricing = (Π_dual, sp_order) -> pricing_Bellmann(G, K, Π_dual, sp_order, C_K_k, sp_order) # [TO DO]
     else
         @error "[column_generation]: unknown resolution method for the subproblems"
     end
@@ -68,7 +71,6 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64, init_choice::String, 
     C_K_k = copy(supp_C_k) # C_K^(k), initialized by C_K^(0)
 
     # subproblem resolution order : initializes with the correct ones only
-    sp_order = I[Gsp_validities]
     k = 1
 
     ### Iterations
