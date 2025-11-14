@@ -6,18 +6,25 @@ include("initialisation.jl")
 using Random
 
 
-# struct Test
-#     G::SimpleDiGraph
-#     K::Int64
-#     prec_z::Float64 = 1e-4
-#     init_choice::String = "half K=2"
-#     SP_order::String = "random"
-#     SP_method::String = "ILP"
-#     max_iter::Int64 = 1000
-# end
+"""
+    column_generation_ILP
 
+Column generation method for the relaxed problem formulation
 
-function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="half K=2", SP_method::String="ILP", SP_order::String="random", max_iter::Int64=500, verb::Int64=-1)
+# Arguments
+* `G::SimpleDiGraph` : sick/donnor pair compatibility graph
+* `K::Int64` : maximum length of cycles
+* `init_choice::String` : method for the first cycle choice
+* `SP_method::String` : resolution method for the subproblem ("Bellmann" or "ILP")
+* `SP_order::String` : order of subproblem resolution ("sequence", "base" or "random")
+* `max_iter::Int64` : maximum number of iteration
+* `verb::Int64` : verbosity level
+
+# Returns 
+* `Vector{Vector{Int64}}` : explored cycles
+* `Int64` : objective value of the relaxed problem
+"""
+function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="half K=2", SP_method::String="ILP", SP_order::String="base", max_iter::Int64=500, verb::Int64=-1)
 
     I = Vector{Int64}(vertices(G)) # vertex indices (supposed to be ⟦1,length()⟧ without any index missed)
 
@@ -44,15 +51,20 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="
 
         # ↓ warning ↓ : will create empty problem if it is infeasible (G_o_prime doesn't containt any path)
         SP = [initialize_SP_o(Gs_prime[o], Gsp_validities[o]) for o in I] # Sub Problems (SP_o) for o ∈ ⟦1,|I|⟧ 
-        pricing = (Π_dual, sp_order) -> princing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order)
+        pricing = (Π_dual, sp_order) -> princing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
 
     elseif SP_method == "Bellmann"
-        pricing = (Π_dual, sp_order) -> princing_Bellmann(Gs_prime, Φ, Π_dual, sp_order) # [TO DO]
+        pricing = (Π_dual, sp_order) -> princing_Bellmann(G, K, Π_dual, sp_order, C_K_k, sp_order) # [TO DO]
     else
         @error "[column_generation]: unknown resolution method for the subproblems"
     end
 
-    supp_C_k = first_cycles_K(init_choice, G, Gs_prime, Gsp_validities, Φ)    # C_K^(0)
+    ## Choice of the first cycles
+    if SP_method == "ILP" && init_choice == "path in G_o_prime"
+        supp_C_k = first_G_op(Gs_prime, Gsp_validities, Φ)
+    else
+        supp_C_k = first_cycles_K(init_choice, G)    # C_K^(0)
+    end
     C_K_k = copy(supp_C_k) # C_K^(k), initialized by C_K^(0)
 
     # subproblem resolution order : initializes with the correct ones only
@@ -66,7 +78,7 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="
 
         ## DW restricted formulation resolution
         add_cycles_DW_dual!(DW_dual, Π, supp_C_k)
-        Π_values = solve_DW_dual(DW_dual)
+        Π_values = solve_DW_dual(DW_dual, verb)
 
         ## Sub Porblems (SP_o) resolutions
 
@@ -74,12 +86,10 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="
         if SP_order == "random"
             shuffle!(sp_order)
         elseif SP_order == "sequence"   # begin with a different one each time
-            first = k % length(sp_order)
             circshift!(sp_order, -1)
-
         end
 
-        # 
+        # resolution
         supp_C_k, stop_algo = pricing(Π_values, sp_order)
 
 
@@ -109,7 +119,20 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64; init_choice::String="
 
 end
 
+"""
+    integer_solution
 
+Solves the integer Dwantzig-Wolfe formulation with the given cycles (results of column_generation)
+
+# Arguments
+* `C_K::Vector{Vector{Int64}}` : know cycles (result of column_generation)
+* `n_transfert_integer::Int64` : objective value of the relaxed problem
+* `verb::Int64` : verbosity level
+
+# Returns
+* `Vector{Vector{Int64}}` : selected cycles
+* `Int64` : objective value of the integer problem
+"""
 function integer_solution(C_K::Vector{Vector{Int64}}, n_transferts_relax::Int64; verb::Int64=-1)
 
     p = length(C_K)
@@ -154,6 +177,6 @@ function integer_solution(C_K::Vector{Vector{Int64}}, n_transferts_relax::Int64;
             println("\t - transfert performed: $(C_K[value.(α) .> 0.0])\n\n")
         end
 
-        return C_K[value.(α).>0]
+        return C_K[value.(α).>0], n_transfert_integer
     end
 end

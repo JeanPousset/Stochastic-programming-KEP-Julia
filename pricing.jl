@@ -66,7 +66,7 @@ Solves the ILP formulation of the o-th subproblem
 * `G_o_prime::SimpleDiGraph` : outneighbors of the o-th subproblem
 * `verb::Int64=0` : verbosity (0: nothing, >= 1: print optimal value z_o, >= 2: solver logs)
 """
-function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64=0)::Tuple{Vector{Int64},Bool}
+function solve_SP_o_ILP(SP_o::Model, G_o_prime::SimpleDiGraph, verb::Int64)::Tuple{Vector{Int64},Bool}
 
     set_optimizer_attribute(SP_o, "output_flag", verb >= 2) # activate or deactivates solver logs
 
@@ -120,7 +120,7 @@ Solves the (SP_o) subproblems until it finds a cycle that gives z_o > 0
 * `Π_dual::Vector{Float64}` : solution of the DW formulation problem restricted to C_K^(k)
 * `order::Vector{Int64}` : choice of subproblem resolution order
 """
-function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64}, order::Vector{Int64})::Tuple{Vector{Vector{Int64}},Bool}
+function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Vector{Vector{Int64}}, Gsp_validities::Vector{Bool}, Π_dual::Vector{Float64}, order::Vector{Int64}, verb::Int64)::Tuple{Vector{Vector{Int64}},Bool}
 
 
     cycles_k = Vector{Vector{Int64}}()
@@ -130,7 +130,7 @@ function princing_ILP(SP::Vector{Model}, Gs_prime::Vector{SimpleDiGraph}, Φ::Ve
         # We solve the sub-problem only if it is valid
         if Gsp_validities[o]
             objective_SP_o!(SP[o], Gs_prime[o], Φ[o], Π_dual) # update the o-th subproblem with the new values of Π_dual
-            ind_cycle, flag_stop = solve_SP_o_ILP(SP[o], Gs_prime[o])
+            ind_cycle, flag_stop = solve_SP_o_ILP(SP[o], Gs_prime[o], verb)
 
             if flag_stop # we found a path c so that z_o(c) > o
 

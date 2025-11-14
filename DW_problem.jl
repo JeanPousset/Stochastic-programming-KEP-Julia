@@ -46,7 +46,7 @@ Solves the dual of the DW formulation restricted to C_K^(k)
 * `DW_dual::Model` :  dual problem of the DW formulation restricted to C_K^(k)
 * `verb::Int64=0` : verbosity (0: nothing, >= 1: print solution Π, >= 2: solver logs)
 """
-function solve_DW_dual(DW_dual::Model, verb::Int64=0)::Vector{Float64}
+function solve_DW_dual(DW_dual::Model, verb::Int64)::Vector{Float64}
 
     set_optimizer_attribute(DW_dual, "output_flag", verb >= 2) # activate or deactivates solver logs
     timer = @timed optimize!(DW_dual)

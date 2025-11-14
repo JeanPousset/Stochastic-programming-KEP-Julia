@@ -17,7 +17,7 @@ Compute the first cycles of length <= K for the column generation depending of t
 # Returns
 * `cycles_0::Vector{Vector{Int64}}` : first cycles for the column generation 
 """
-function first_cycles_K(init_choice::String, G::SimpleDiGraph, Gs_prime::Vector{SimpleDiGraph}, Gsp_validities::Vector{Bool}, Φ::Vector{Vector{Int64}})::Vector{Vector{Int64}}
+function first_cycles_K(init_choice::String, G::SimpleDiGraph)::Vector{Vector{Int64}}
 
     if init_choice == "all K=2"
         cycles_2 = enumerate_cycles(G, 2)   # mask of half the indices
@@ -26,8 +26,6 @@ function first_cycles_K(init_choice::String, G::SimpleDiGraph, Gs_prime::Vector{
         cycles_2 = enumerate_cycles(G, 2)   # mask of half the indices
         selected_cycles = rand(1:length(cycles_2), div(length(cycles_2), 2))
         return cycles_2[selected_cycles]   # half of the cycles of length 2
-    elseif init_choice == "path in G_op"
-        return first_G_op(Gs_prime, Gsp_validities, Φ)
     else
         @error("[first_cycles_K]: unknown choice : \"$init_choice\" for the first cycles")
     end
