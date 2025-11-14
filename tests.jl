@@ -35,6 +35,6 @@ Solves the relaxation of the KEP Dwantzig-Wolfe formulation with the column gene
 function solve_KEP(test::KEP_test; verb::Int64=-1)
 
     C_K, n_transferts_relax = column_generation_ILP(test.G, test.K, test.init_choice, test.SP_method, test.SP_order, test.max_iter, verb)
-    selected_cycles = integer_solution(C_K, n_transferts_relax, verb)
+    selected_cycles = integer_solution(C_K, test.G, n_transferts_relax, verb)
 
 end

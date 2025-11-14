@@ -1,3 +1,5 @@
+using Graphs
+
 function Bellman_search(G::SimpleDiGraph, o::Int, K::Int, Π_dual::Vector{Float64})
 
     ##Initialisation
@@ -71,7 +73,7 @@ function Bellman_search(G::SimpleDiGraph, o::Int, K::Int, Π_dual::Vector{Float6
 end
 
 """
-   pricing_Bellman
+   pricing_Bellmann
 
 Find the cycles of highest cost for every vertices of the graph
 
@@ -87,7 +89,7 @@ Find the cycles of highest cost for every vertices of the graph
 * `false::Boolean` : if at least one cycle was found and thus we continue the algorithm
 
 """
-function pricing_Bellman(G::SimpleDiGraph, K::Int, Π_dual::Vector{Float64}, C_K_k::Vector{Vector{Int}}, sp_order::Vector{Int64})
+function pricing_Bellmann(G::SimpleDiGraph, K::Int, Π_dual::Vector{Float64}, C_K_k::Vector{Vector{Int}}, sp_order::Vector{Int64})
     chosen_cycles = Vector{Vector{Int}}()
     for o in sp_order
         cycle = Bellman_search(G, o, K, Π_dual)

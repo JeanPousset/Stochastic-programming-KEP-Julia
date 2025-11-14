@@ -52,12 +52,12 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64, init_choice::String, 
 
         # ↓ warning ↓ : will create empty problem if it is infeasible (G_o_prime doesn't containt any path)
         SP = [initialize_SP_o(Gs_prime[o], Gsp_validities[o]) for o in I] # Sub Problems (SP_o) for o ∈ ⟦1,|I|⟧ 
-        pricing = (Π_dual, sp_order) -> pricing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
+        pricing = (Π_dual, sp_order, C_K_k) -> pricing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
         sp_order = I[Gsp_validities]
 
     elseif SP_method == "Bellmann"
+        pricing = (Π_dual, sp_order, C_K_k) -> pricing_Bellmann(G, K, Π_dual, C_K_k, sp_order) # [TO DO]
         sp_order = I
-        pricing = (Π_dual, sp_order) -> pricing_Bellmann(G, K, Π_dual, sp_order, C_K_k, sp_order) # [TO DO]
     else
         @error "[column_generation]: unknown resolution method for the subproblems"
     end
@@ -92,7 +92,7 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64, init_choice::String, 
         end
 
         # resolution
-        supp_C_k, stop_algo = pricing(Π_values, sp_order)
+        supp_C_k, stop_algo = pricing(Π_values, sp_order, C_K_k)
 
 
         if stop_algo # It hasn't find any subcycles that produce z_o > 0 ⇒ we are at the optimum
@@ -129,13 +129,14 @@ Solves the integer Dwantzig-Wolfe formulation with the given cycles (results of 
 # Arguments
 * `C_K::Vector{Vector{Int64}}` : know cycles (result of column_generation)
 * `n_transfert_integer::Int64` : objective value of the relaxed problem
+* `G::SimpleDiGraph` : KEP graph
 * `verb::Int64` : verbosity level
 
 # Returns
 * `Vector{Vector{Int64}}` : selected cycles
 * `Int64` : objective value of the integer problem
 """
-function integer_solution(C_K::Vector{Vector{Int64}}, n_transferts_relax::Int64, verb::Int64)
+function integer_solution(C_K::Vector{Vector{Int64}}, G::SimpleDiGraph, n_transferts_relax::Int64, verb::Int64)
 
     p = length(C_K)
     L = length.(C_K)
