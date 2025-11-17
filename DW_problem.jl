@@ -53,7 +53,7 @@ function solve_DW_dual(DW_dual::Model, verb::Int64)::Vector{Float64}
 
 
     if (termination_status(DW_dual) == MOI.OPTIMAL)
-        verb >= 1 && println("Π := $(value.(Π))") # Display solution (if verbosity >= 1)
+        verb >= 1 && println("Π := $(value.(DW_dual[:Π]))") # Display solution (if verbosity >= 1)
     else
         @warn "[solve_DW_dual]: dual of DW formulation is not optimal"
     end
