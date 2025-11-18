@@ -28,6 +28,6 @@ graph TD;
 | `initialization.jl`| methods to compute the first cycles (initialized) | *first_cycles_K*, *first_G_op* | 
 | `out_ngb_G.jl` | build the outneigbors G_o_prime graphs for the ILP formulation of the subproblems | *build_Gs_prime* | 
 | `pricing_ILP.jl` | handles the ILP formulation of the sub-problems  :  initialization, udpate and solving | *initialize_SP_o*, *objective_SP_o!*, *solve_SP_o_ILP*, *princing_ILP* |
-| `solver.jl` | column generation for the relaxed DW problem and ILP solver for the integer (first problem) | *column_generation_ILP*, *integer_solution* | 
-| `tests.jl` | builds and lunch test on KEP instances | *KEP_test*, *solve_KEP* | 
+| `solver.jl` | column generation for the relaxed DW problem, ILP solver for the integer (first problem) and global solver | *KEP_test*, *solve_KEP*, *column_generation_ILP*, *integer_solution* | 
+| `tests.jl` | builds and lunch test various test (performance profile, method comparaison ...) on KEP instances |  *init_choice_comparaison*, *sp_order_comparaison*,*methods_speed_comparaison*, *evolution_Bellmann*, *max_K_opti*  | 
 

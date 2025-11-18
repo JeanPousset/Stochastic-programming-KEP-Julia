@@ -59,7 +59,7 @@ and solving the Dwantzig-Wolfe formulation on this cycle set.
 * `G::SimpleDiGraph` : compatibility graph
 * `K::Int64` : max length of searched cycles
 """
-function brut_force(G::SimpleDiGraph, K::Int64)
+function brut_force(G::SimpleDiGraph, K::Int64; verb::Int64=1)
     C_K = enumerate_cycles(G, K)
     p = length(C_K)
     L = length.(C_K) # cycles lengths
@@ -70,7 +70,6 @@ function brut_force(G::SimpleDiGraph, K::Int64)
     # Build cycle sets that contains the vertex i, ∀ i ∈ I
     #  -> we use sets to don't have duplicates
     for k in eachindex(C_K) # k ∈ ⟦1,p⟧
-        print("$k \t")
         for v in C_K[k]
             push!(C_K_i[v], k)
         end
@@ -93,22 +92,25 @@ function brut_force(G::SimpleDiGraph, K::Int64)
     timer = @timed optimize!(model)
 
     # Display results
-    println("\n-------------------------------")
-    println("Brute force resolution of the KEP problem with K = $K \n")
-    println("Resolution status : ", termination_status(model))
-    println("computation time : $(timer.time)")
-    if (termination_status(model) == MOI.OPTIMAL)
-        println("Number of performed exchanges  : ", objective_value(model))
-        println("List of performed exchanges :")
 
-        for k in 1:p
-            if value(α[k]) == 1 # cycle is choosen
-                print("\n*** Cycle chosen: \n\t $(C_K[k][1])")
-                for v in C_K[k][2:end]
-                    print(" -> $v")
+    if verb >= 1
+        println("\n-------------------------------")
+        println("Brute force resolution of the KEP problem with K = $K \n")
+        println("Resolution status : ", termination_status(model))
+        println("computation time : $(timer.time)")
+        if (termination_status(model) == MOI.OPTIMAL)
+            println("Number of performed exchanges  : ", objective_value(model))
+            println("List of performed exchanges :")
+
+            for k in 1:p
+                if value(α[k]) == 1 # cycle is choosen
+                    print("\n*** Cycle chosen: \n\t $(C_K[k][1])")
+                    for v in C_K[k][2:end]
+                        print(" -> $v")
+                    end
                 end
             end
         end
+        println("\n-------------------------------\n")
     end
-    println("\n-------------------------------\n")
 end
