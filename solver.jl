@@ -24,6 +24,12 @@ struct KEP_test
         G, _ = read_wmd_file(g_file)
         new(G, K, init_choice, SP_method, SP_order, max_iter)
     end
+
+    # constructor (with default parameters) for a subgraph G of a previously loaded one
+    function KEP_test(G::SimpleDiGraph; K::Int64=4, init_choice::String="half K=2", SP_method::String="ILP", SP_order::String="random", max_iter::Int64=500)
+        new(G, K, init_choice, SP_method, SP_order, max_iter)
+    end
+
 end
 
 
@@ -31,7 +37,7 @@ end
     solve_KEP
 
 Solves the relaxation of the KEP Dwantzig-Wolfe formulation with the column generation problem, then solve the integer KEP with the computed cycles
-    
+
 # Arguments
 * `test::KEP_test` : a Kidney Exchange Problem instance
 * `verb::Int64` : verbosity level
@@ -60,7 +66,7 @@ Column generation method for the relaxed problem formulation
 * `max_iter::Int64` : maximum number of iteration
 * `verb::Int64` : verbosity level
 
-# Returns 
+# Returns
 * `Vector{Vector{Int64}}` : explored cycles
 * `Int64` : objective value of the relaxed problem
 """
@@ -90,7 +96,7 @@ function column_generation_ILP(G::SimpleDiGraph, K::Int64, init_choice::String, 
         end
 
         # ↓ warning ↓ : will create empty problem if it is infeasible (G_o_prime doesn't containt any path)
-        SP = [initialize_SP_o(Gs_prime[o], Gsp_validities[o]) for o in I] # Sub Problems (SP_o) for o ∈ ⟦1,|I|⟧ 
+        SP = [initialize_SP_o(Gs_prime[o], Gsp_validities[o]) for o in I] # Sub Problems (SP_o) for o ∈ ⟦1,|I|⟧
         pricing = (Π_dual, sp_order, C_K_k) -> pricing_ILP(SP, Gs_prime, Φ, Gsp_validities, Π_dual, sp_order, verb)
         sp_order = I[Gsp_validities]
 
@@ -190,7 +196,7 @@ function integer_solution(C_K::Vector{Vector{Int64}}, G::SimpleDiGraph, n_transf
         end
     end
 
-    # indices : 
+    # indices :
     # - k ∈ ⟦1,p⟧, where p = |C_K| (k is equivalent to index c in the Dwantzig-Wolfe formulation)
     # - i,v ∈ I (vertices set)
 
