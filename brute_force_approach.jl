@@ -1,3 +1,5 @@
+include("expectation.jl")
+
 """
     enumerate_cycles
 

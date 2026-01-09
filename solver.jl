@@ -228,3 +228,5 @@ function integer_solution(C_K::Vector{Vector{Int64}}, G::SimpleDiGraph, n_transf
         return C_K[value.(α).>0], n_transfert_integer
     end
 end
+
+
